@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+   mapper标签:配置各类声明
+   namespace：名称空间，由于映射文件可能有多个，为了防止crud语句的唯一标识被重复，需要设置空间名称。
+ -->
+
+<mapper namespace="com.demon.mapper.UserMapper">
+
+    <!--通过Order延迟加载User-->
+    <resultMap id="orderUserLazyResultMap" type="Order">
+        <!--
+            select属性：调用指定sql语句来执行延迟加载
+            column属性：延迟加载的sql语句中所需的参数
+        -->
+        <association property="user" javaType="User" select="queryUserByIdOfOrder" column="{id=user_id}"/>
+    </resultMap>
+    <!--通过订单编号查询订单-->
+    <select id="queryOrderUserLazy" resultMap="orderUserLazyResultMap">
+        select * from tb_order where tb_order.order_number = ${orderNumber}
+    </select>
+    <select id="queryUserByIdOfOrder" resultType="User">
+        select * from tb_user WHERE tb_user.id = ${id}
+    </select>
+
+    <!--多对多查询-->
+    <resultMap id="orderAndUserAndOrderDetailsAndItemResultMap" type="Order" autoMapping="true">
+        <id column="id" property="id"/>
+        <association property="user" javaType="User" autoMapping="true">
+            <id column="uid" property="id"/>
+        </association>
+        <collection property="orderdetails" javaType="List" ofType="Orderdetail" autoMapping="true">
+            <id column="detail_id" property="id"/>
+            <association property="item" javaType="Item" autoMapping="true">
+                <id column="iid" property="id"/>
+            </association>
+        </collection>
+    </resultMap>
+    <select id="queryOrderAndUserAndOrderDetailsAndItemByOrderNumber" resultMap="orderAndUserAndOrderDetailsAndItemResultMap">
+        SELECT
+            *, u.id as uid, od.id as detail_id, i.id as iid
+        FROM
+            tb_order o
+        INNER JOIN tb_user u ON o.user_id = u.id
+        INNER JOIN tb_orderdetail od ON o.id = od.order_id
+        INNER JOIN tb_item i ON od.item_id = i.id
+        WHERE
+            o.order_number = ${orderNumber}
+    </select>
+
+    <!--一对多查询-->
+    <resultMap id="orderAndUserAndOrderDetailsResultMap" type="Order" autoMapping="true">
+        <id column="id" property="id"/>
+        <association property="user" javaType="User" autoMapping="true">
+            <id column="uid" property="id"/>
+        </association>
+        <collection property="orderdetails" javaType="List" ofType="Orderdetail" autoMapping="true">
+            <id column="detail_id" property="id"/>
+        </collection>
+    </resultMap>
+    <select id="queryOrderAndUserAndOrderDetailsByOrderNumber" resultMap="orderAndUserAndOrderDetailsResultMap">
+        SELECT
+            *, u.id as uid, od.id as detail_id
+        FROM
+            tb_order o
+        INNER JOIN tb_user u ON o.user_id = u.id
+        INNER JOIN tb_orderdetail od ON o.id = od.order_id
+        WHERE
+            o.order_number = ${orderNumber}
+    </select>
+
+    <!--一对一查询-->
+    <resultMap id="orderAndUserResultMap" type="Order" autoMapping="true">
+        <id column="id" property="id"/>
+        <association property="user" javaType="User" autoMapping="true">
+            <id column="uid" property="id"/>
+        </association>
+    </resultMap>
+    <select id="queryOrderAndUserByOrderNumber" resultMap="orderAndUserResultMap">
+        SELECT
+            *, u.id as uid
+        FROM
+            tb_order o
+        INNER JOIN tb_user u ON o.user_id = u.id
+        WHERE
+            o.order_number = ${orderNumber}
+    </select>
+</mapper>
